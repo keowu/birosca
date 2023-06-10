@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="thr3rd">
+      <UniqueIdentifier>{96fa046a-4a3d-44e6-9a53-d6cd18322c02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{a538bc75-64f6-477e-a7ed-96400dd43129}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Defs">
+      <UniqueIdentifier>{a35e067e-89ce-489b-b404-4ef47ed179d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="thr3rd\distorm-3.5.2b">
+      <UniqueIdentifier>{61617bf5-504d-4c10-ac57-c25912097ea4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thr3rd\distorm-3.5.2b\include">
+      <UniqueIdentifier>{ae26ed0c-2dba-4ad6-8fbb-271882bed507}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\PeFixer">
+      <UniqueIdentifier>{88edf5b9-276c-496c-bd03-92ab3fb90e0b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="VMP1xUnpacker.cc">
+      <Filter>Main</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="VMPProcess.hh">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="VMPDebugger.hh">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="VMPType.hh">
+      <Filter>Defs</Filter>
+    </ClInclude>
+    <ClInclude Include="thr3rd\distorm-3.5.2b\include\distorm.h">
+      <Filter>thr3rd\distorm-3.5.2b\include</Filter>
+    </ClInclude>
+    <ClInclude Include="thr3rd\distorm-3.5.2b\include\mnemonics.h">
+      <Filter>thr3rd\distorm-3.5.2b\include</Filter>
+    </ClInclude>
+    <ClInclude Include="VMPDisasm.hh">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="VMPFIXEngine.hh">
+      <Filter>Engine\PeFixer</Filter>
+    </ClInclude>
+    <ClInclude Include="WINPEParser.hh">
+      <Filter>Engine\PeFixer</Filter>
+    </ClInclude>
+    <ClInclude Include="WINPESection.hh">
+      <Filter>Engine\PeFixer</Filter>
+    </ClInclude>
+    <ClInclude Include="VMPKeoVirtualMachine.hh">
+      <Filter>Engine</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="thr3rd\distorm-3.5.2b\lib\distorm.lib">
+      <Filter>thr3rd\distorm-3.5.2b</Filter>
+    </Library>
+  </ItemGroup>
+</Project>
