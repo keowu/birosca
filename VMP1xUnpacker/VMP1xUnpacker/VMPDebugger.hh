@@ -61,13 +61,13 @@ private:
 
 		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, (LPCVOID)vmp->GetVMPP().ImageBase, imgDosH, sizeof(IMAGE_DOS_HEADER), NULL);
 
-		if (imgDosH->e_magic != 0X5A4D) throw std::runtime_error("ERROR INVALID MZ !");
+		if (imgDosH->e_magic != IMAGE_DOS_SIGNATURE) throw std::runtime_error("ERROR INVALID MZ !");
 
 		auto imgNtH = new IMAGE_NT_HEADERS;
 
 		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, (LPCVOID)(vmp->GetVMPP().ImageBase + imgDosH->e_lfanew), imgNtH, sizeof(IMAGE_NT_HEADERS), NULL);
 
-		if (imgNtH->Signature != 0x4550) throw std::runtime_error("ERROR INVALID PE!");
+		if (imgNtH->Signature != IMAGE_NT_SIGNATURE) throw std::runtime_error("ERROR INVALID PE!");
 
 		this->vmpdbg.AddressOfEntryPoint = imgNtH->OptionalHeader.AddressOfEntryPoint;
 
@@ -201,20 +201,20 @@ public:
 		switch (vmp->GetVMPP().vmpType) {
 
 		case VMPType::VMPROTECT_1_1:
-			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 10;
+			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 10;//on vmexit pré-exit opcode
 			break;
 
 		case VMPType::VMPROTECT_1_4:
-			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 11;
+			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 11;//on vmexit pré-exit opcode
 			break;
 
 		case VMPType::VMPROTECT_1_54:
-			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 12;
+			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 12;//on vmexit pré-exit opcode
 			break;
 
 		case VMPType::VMPROTECT_1_70_4: 
 
-			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 22;//on vmexti ret instruction
+			this->vmpdbg.vmExitAddressRoutine = this->vmpdbg.vmExitAddressRoutine + 22;//on vmexit pré-exit opcode
 			
 			break;
 
@@ -332,7 +332,7 @@ public:
 
 						if (entryPoint != NULL) {
 						
-							unsigned char ucEntryPointOP[20]{ 0 }; // Just 20 bytes of OEP routine
+							unsigned char ucEntryPointOP[20]{ 0 }; // Just 20 bytes of OEP routine, it's fine to get a competent disasm
 
 							ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(entryPoint), ucEntryPointOP, 20, NULL);
 
@@ -353,7 +353,8 @@ public:
 
 						SetThreadContext(vmp->GetVMPP().pi.hThread, &ctx);
 
-						//TODO: DUMP ENTRYPOINT HERE and fix IAT
+						//Ivan have implemented IAT Obfuscation on the version after 2.1 of the vmprotect.
+						//So we can take the original OEP reconstructed by unpacking stub.
 						std::unique_ptr<VMPFIXEngine> vmpengfix(new VMPFIXEngine());
 
 						vmpengfix->Init(vmp->GetVMPP().pi.hProcess, vmp->GetVMPP().ImageBase, entryPoint);
