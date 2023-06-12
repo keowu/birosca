@@ -74,8 +74,7 @@ private:
 
 				this->chHeaderMemory = new unsigned char[dwCorrectSize];
 
-				if (!ReadProcessMemory(this->hProcess, reinterpret_cast<LPCVOID>(this->uipModuleBaseAddress), this->chHeaderMemory, dwCorrectSize, NULL))
-					return FALSE;
+				if (!ReadProcessMemory(this->hProcess, reinterpret_cast<LPCVOID>(this->uipModuleBaseAddress), this->chHeaderMemory, dwCorrectSize, NULL)) return FALSE;
 
 				this->GetDosAndNTHeader(this->chHeaderMemory, dwCorrectSize);
 
@@ -131,11 +130,7 @@ private:
 				this->pDOSStub = reinterpret_cast<unsigned char*>((uintptr_t)this->pDOSH + sizeof(IMAGE_DOS_HEADER));
 
 			}
-			else if (this->pDOSH->e_lfanew < sizeof(IMAGE_DOS_HEADER)) {
-
-				this->pDOSH->e_lfanew = sizeof(IMAGE_DOS_HEADER);
-
-			}
+			else if (this->pDOSH->e_lfanew < sizeof(IMAGE_DOS_HEADER)) this->pDOSH->e_lfanew = sizeof(IMAGE_DOS_HEADER);
 
 		}
 

@@ -91,7 +91,9 @@ private:
 		if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE) throw std::runtime_error("Invalid PE File !");
 
 		auto ntHeaders = reinterpret_cast<PIMAGE_NT_HEADERS>(reinterpret_cast<UINT_PTR>(pByte) + dosHeader->e_lfanew);
+		
 		auto sizeOfOptionalHeader = ntHeaders->FileHeader.SizeOfOptionalHeader;
+		
 		auto fileHeader = &(ntHeaders->FileHeader);
 
 		//Save original VMP Machine entry point
@@ -135,6 +137,7 @@ private:
 		WriteFile(hFile, pByte, dwFileSz, NULL, NULL);
 
 		auto first = IMAGE_FIRST_SECTION(ntHeaders);
+		
 		auto last = first + (ntHeaders->FileHeader.NumberOfSections - 1);
 
 		SetFilePointer(hFile, last->PointerToRawData, NULL, FILE_BEGIN);

@@ -21,28 +21,5 @@ namespace VMPType {
 		VMPROTECT_1_54,
 		VMPROTECT_1_70_4
 	};
-
-
-	class VMPROTECT_DETECTION_MECHANISM {
-
-
-		private:
-			typedef struct _DETECTIONS_BASE {
-
-				uintptr_t uipRoutineBase{ 0 };
-				std::string strRoutineName{ 0 };
-
-			} DETECTIONS_BASE;
-
-		public:
-			std::string strModuleName{ 0 };
-			uintptr_t uipModuleBase{ 0 };
-			std::vector<DETECTIONS_BASE> detect;
-
-
-	};
-
-
-	std::unique_ptr<VMPROTECT_DETECTION_MECHANISM> vmpDetectMech(new VMPROTECT_DETECTION_MECHANISM());
-
+	
 };

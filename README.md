@@ -73,9 +73,13 @@ In total, versions below 2.x perform the following calls for verification:
 
 All these calls can be bypassed simply by inserting the Keo stub so that Birosca can load the "KELAIN" module into memory space and handle the calls to these APIs. This allows the Birosca VMP debugger to function smoothly.
 
+##### Kelain and KeoStub in action:
+
+![#5](imgs/workinglain.gif)
+
 ### Running Birosca
 
-![#5](imgs/working.gif)
+![#6](imgs/working.gif)
 
 Birosca output log:
 
