@@ -29,7 +29,7 @@ namespace VMPDisasm {
 
 		if (distorm_decode(is32, ucBuff, uiLen, dt, decodedInstructions, 1000, &decodedInstructionsCount) == DECRES_INPUTERR) throw std::runtime_error("Error disassembly of the vmprotector packer entry !");
 
-		for (auto i = 0; i < decodedInstructionsCount; i++) if (is32) std::printf("%llx (%02d) %-24s %s%s%s\n", decodedInstructions[i].offset, decodedInstructions[i].size, (char*)decodedInstructions[i].instructionHex.p, (char*)decodedInstructions[i].mnemonic.p, decodedInstructions[i].operands.length != 0 ? " " : "", (char*)decodedInstructions[i].operands.p); else std::printf("%0*I64x (%02d) %-24s %s%s%s\n", dt != Decode64Bits ? 8 : 16, decodedInstructions[i].offset, decodedInstructions[i].size, (char*)decodedInstructions[i].instructionHex.p, (char*)decodedInstructions[i].mnemonic.p, decodedInstructions[i].operands.length != 0 ? " " : "", (char*)decodedInstructions[i].operands.p);
+		for (auto i = 0; i < decodedInstructionsCount; i++) if (is32) std::printf("%llx (%02d) %-24s %s%s%s\n", decodedInstructions[i].offset, decodedInstructions[i].size, reinterpret_cast<char*>(decodedInstructions[i].instructionHex.p), reinterpret_cast<char*>(decodedInstructions[i].mnemonic.p), decodedInstructions[i].operands.length != 0 ? " " : "", reinterpret_cast<char*>(decodedInstructions[i].operands.p)); else std::printf("%0*I64x (%02d) %-24s %s%s%s\n", dt != Decode64Bits ? 8 : 16, decodedInstructions[i].offset, decodedInstructions[i].size, reinterpret_cast<char*>(decodedInstructions[i].instructionHex.p), reinterpret_cast<char*>(decodedInstructions[i].mnemonic.p), decodedInstructions[i].operands.length != 0 ? " " : "", reinterpret_cast<char*>(decodedInstructions[i].operands.p));
 
 		std::printf(bannerOut);
 

@@ -33,7 +33,7 @@ auto main() -> int {
     std::unique_ptr<VMPProcess> vmp(new VMPProcess());
 
     //YOU NEED TO PASS THE PATH OF FILE - VMP TYPE - AND IF YOU NEED TO BYPASS ANTIDEBUG/VM/KERNEL MODE STUFF(via Lain)
-    if (!vmp->InitProcess64(str, VMPType::VMPROTECT_1_1, FALSE)) ExitProcess(-1);
+    if (!vmp->InitProcess64(str, VMPType::VMPROTECT_1_1, FALSE)) TerminateProcess(GetCurrentProcess(), - 1);
 
     std::unique_ptr<VMPDebugger> vmpd(new VMPDebugger());
 

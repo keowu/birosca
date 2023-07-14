@@ -41,7 +41,7 @@ private:
 
 		UINT16 MZ{ 0 };
 
-		ReadProcessMemory(this->vmpp.pi.hProcess, (LPCVOID)this->vmpp.ImageBase, &MZ, sizeof(UINT16), NULL);
+		ReadProcessMemory(this->vmpp.pi.hProcess, reinterpret_cast<LPCVOID>(this->vmpp.ImageBase), &MZ, sizeof(UINT16), NULL);
 
 		return MZ == IMAGE_DOS_SIGNATURE;
 	};
@@ -150,7 +150,7 @@ private:
 
 		std::cout << "KeoStub is now on the file. please remove this option(SET TO FALSE), and re-run the same file to init unpacking process\n";
 
-		ExitProcess(-1);
+		TerminateProcess(GetCurrentProcess(), -1);
 
 	};
 
@@ -185,7 +185,7 @@ public:
 		/*
 			ntdll!_PEB32.ImageBaseAddress
 		*/
-		ReadProcessMemory(this->vmpp.pi.hProcess, (LPVOID)(ctx.Ebx + 8), &ptrImageBase, sizeof(uintptr_t), NULL);
+		ReadProcessMemory(this->vmpp.pi.hProcess, reinterpret_cast<LPVOID>(ctx.Ebx + 8), &ptrImageBase, sizeof(uintptr_t), NULL);
 
 		this->vmpp.ImageBase = ptrImageBase;
 
@@ -324,11 +324,11 @@ public:
 				+0x7b0 PlaceholderCompatibilityMode : Char
 				+0x7b1 PlaceholderCompatibilityModeReserved : [7] Char
 		*/
-		auto PebImageBaseAddress = (DWORD_PTR)pi.PebBaseAddress + 0x10;
+		auto PebImageBaseAddress = reinterpret_cast<DWORD_PTR>(pi.PebBaseAddress) + 0x10;
 
 		uintptr_t ImageBase = 0;
 
-		ReadProcessMemory(this->vmpp.pi.hProcess, (LPCVOID)PebImageBaseAddress, &ImageBase, sizeof(uintptr_t), NULL);
+		ReadProcessMemory(this->vmpp.pi.hProcess, reinterpret_cast<LPCVOID>(PebImageBaseAddress), &ImageBase, sizeof(uintptr_t), NULL);
 
 		this->vmpp.ImageBase = ImageBase;
 

@@ -14,9 +14,12 @@ Copyright (c) Fluxuss Software Security, LLC
 #include <functional>
 #include <list>
 #include <filesystem>
+#include <dbghelp.h>
 #include "VMPProcess.hh"
 #include "VMPDisasm.hh"
 #include "VMPFIXEngine.hh"
+
+#pragma comment(lib, "DbgHelp.lib")
 
 class VMPDebugger {
 
@@ -59,13 +62,13 @@ private:
 		//Obter o tamanho e endereço das seções mapeadas na memória do processo
 		auto imgDosH = new IMAGE_DOS_HEADER;
 
-		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, (LPCVOID)vmp->GetVMPP().ImageBase, imgDosH, sizeof(IMAGE_DOS_HEADER), NULL);
+		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(vmp->GetVMPP().ImageBase), imgDosH, sizeof(IMAGE_DOS_HEADER), NULL);
 
 		if (imgDosH->e_magic != IMAGE_DOS_SIGNATURE) throw std::runtime_error("ERROR INVALID MZ !");
 
 		auto imgNtH = new IMAGE_NT_HEADERS;
 
-		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, (LPCVOID)(vmp->GetVMPP().ImageBase + imgDosH->e_lfanew), imgNtH, sizeof(IMAGE_NT_HEADERS), NULL);
+		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(vmp->GetVMPP().ImageBase + imgDosH->e_lfanew), imgNtH, sizeof(IMAGE_NT_HEADERS), NULL);
 
 		if (imgNtH->Signature != IMAGE_NT_SIGNATURE) throw std::runtime_error("ERROR INVALID PE!");
 
@@ -73,15 +76,15 @@ private:
 
 		this->vmpdbg.AddressOfEntryPointRelative = vmp->GetVMPP().ImageBase + imgNtH->OptionalHeader.AddressOfEntryPoint;
 
-		this->vmpdbg.is32 = imgNtH->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC ? TRUE : FALSE;
+		this->vmpdbg.is32 = imgNtH->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC;
 
 		auto imgSecH = new IMAGE_SECTION_HEADER[imgNtH->FileHeader.NumberOfSections];
 
-		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, (LPCVOID)(vmp->GetVMPP().ImageBase + imgDosH->e_lfanew + 4 + sizeof(IMAGE_FILE_HEADER) + imgNtH->FileHeader.SizeOfOptionalHeader), imgSecH, sizeof(IMAGE_SECTION_HEADER) * imgNtH->FileHeader.NumberOfSections, NULL);
+		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(vmp->GetVMPP().ImageBase + imgDosH->e_lfanew + 4 + sizeof(IMAGE_FILE_HEADER) + imgNtH->FileHeader.SizeOfOptionalHeader), imgSecH, sizeof(IMAGE_SECTION_HEADER) * imgNtH->FileHeader.NumberOfSections, NULL);
 
 		for (auto i = 0; i < imgNtH->FileHeader.NumberOfSections; i++) {
 
-			if (std::string((char*)imgSecH[i].Name).find(this->vmpdbg.defaultVMPSegmentNames) != std::string::npos) {
+			if (std::string(reinterpret_cast<char*>(imgSecH[i].Name)).find(this->vmpdbg.defaultVMPSegmentNames) != std::string::npos) {
 
 				std::printf("[X] Virtual Machine Section -> %s\n", imgSecH[i].Name);
 
@@ -105,7 +108,7 @@ private:
 
 		unsigned char jmp[64]{ 0 };
 
-		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, (LPCVOID)this->vmpdbg.AddressOfEntryPointRelative, jmp, sizeof(jmp), NULL);
+		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(this->vmpdbg.AddressOfEntryPointRelative), jmp, sizeof(jmp), NULL);
 
 		VMPDisasm::DisasmAndPrint(this->vmpdbg.AddressOfEntryPointRelative, jmp, 64, this->vmpdbg.is32, "BEGIN VM PROTECT PACKER ENTRY DISAM\n_______\n", "_______\nEND VM PROTECT PACKER ENTRY DISAM\n");
 
@@ -130,7 +133,7 @@ private:
 
 					unsigned char chk[22]{ 0 };
 
-					ReadProcessMemory(vmp->GetVMPP().pi.hProcess, (LPCVOID)(vmp->GetVMPP().ImageBase + vmpMachineSection.virtualAddress + i), chk, sizeof(chk), NULL);
+					ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(vmp->GetVMPP().ImageBase + vmpMachineSection.virtualAddress + i), chk, sizeof(chk), NULL);
 
 					switch (vmp->GetVMPP().vmpType) {
 
@@ -189,6 +192,26 @@ private:
 
 	};
 
+	std::function<uintptr_t(std::unique_ptr<VMPProcess>& vmp, CONTEXT ctx, DWORD dwPosition)> GetStackFrameContext = [&](std::unique_ptr<VMPProcess>& vmp, CONTEXT ctx, DWORD dwPosition) -> uintptr_t {
+
+		uintptr_t uipValue{ 0 };
+
+		STACKFRAME64 stackFrame{ 0 };
+
+		stackFrame.AddrPC = ADDRESS64(ctx.Rip);
+
+		stackFrame.AddrFrame = ADDRESS64(ctx.Rbp);
+
+		stackFrame.AddrStack = ADDRESS64(ctx.Rsp);
+
+		// the return address from stack frame will not be avaliable in some cases, só is more safety acess the AddrFrame.
+		while (StackWalk64(IMAGE_FILE_MACHINE_I386, vmp->GetVMPP().pi.hProcess, vmp->GetVMPP().pi.hThread, &stackFrame, &ctx, NULL, NULL, NULL, NULL)) uipValue = stackFrame.AddrFrame.Offset;
+
+		ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(uipValue - dwPosition), &uipValue, sizeof(uintptr_t), NULL);
+
+		return uipValue;
+	};
+
 public:
 
 	std::function<void(std::unique_ptr<VMPProcess>& vmp)> InitContext = [&](std::unique_ptr<VMPProcess>& vmp) {
@@ -243,11 +266,11 @@ public:
 
 			switch (this->vmpdbg.dbgEvent.dwDebugEventCode) {
 
-				case 1: {
+				case EXCEPTION_DEBUG_EVENT: {
 
 					switch (this->vmpdbg.dbgEvent.u.Exception.ExceptionRecord.ExceptionCode) {
 
-						case 0x80000003L: {
+						case CREATE_PROCESS_DEBUG_EVENT: {
 
 							CONTEXT ctx{ 0 };
 
@@ -265,7 +288,7 @@ public:
 					}
 
 				}
-				case 8: {
+				case OUTPUT_DEBUG_STRING_EVENT: {
 
 					CONTEXT ctx{ 0 };
 
@@ -290,17 +313,19 @@ public:
 							
 							//Acessing entrypoint from stack to be used on ret, vmprotect use in the lat unpack routine the entrypoint onto stack
 							//and use a ret instruct to go to entrypoint. yeah like some hooks do
-							ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(ctx.Rbp - 0x10), &entryPoint, sizeof(uintptr_t), NULL);
+							entryPoint = GetStackFrameContext(vmp, ctx, 0x10);
 
 							if (this->vmpdbg.is32) entryPoint = static_cast<DWORD>(entryPoint);
+
 							std::printf("Entrypoint recovery from vmexit into first position of stack: 0x%llx\n", entryPoint);
 
 						}
 						else if (vmp->GetVMPP().vmpType == VMPType::VMPROTECT_1_4 || vmp->GetVMPP().vmpType == VMPType::VMPROTECT_1_54) {
 
-							ReadProcessMemory(vmp->GetVMPP().pi.hProcess, reinterpret_cast<LPCVOID>(ctx.Rbp - 0x10), &entryPoint, sizeof(uintptr_t), NULL);
+							entryPoint = GetStackFrameContext(vmp, ctx, 0x10);
 
 							if (this->vmpdbg.is32) entryPoint = static_cast<DWORD>(entryPoint);
+
 							std::printf("Entrypoint recovery from vmexit into third position of stack: 0x%llx\n", entryPoint);
 
 						} else if (vmp->GetVMPP().vmpType == VMPType::VMPROTECT_1_70_4) {							
@@ -359,7 +384,7 @@ public:
 
 						vmpengfix->Init(vmp->GetVMPP().pi.hProcess, vmp->GetVMPP().ImageBase, entryPoint);
 
-						ExitProcess(-1);
+						TerminateProcess(GetCurrentProcess(), -1);
 
 						//end dump
 
